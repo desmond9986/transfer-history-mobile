@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLOR, FONT_SIZE, RADIUS, SPACING } from '../../../shared/theme/tokens';
@@ -7,7 +7,11 @@ import { TransferHistoryRoute } from '../navigation/routes';
 import type { TransferHistoryStackScreenProps } from '../navigation/types';
 import { useTransferHistoryStore } from '../store/useTransferHistoryStore';
 import type { Transfer } from '../types';
-import { formatTransferAmount, formatTransferDetailDate } from '../utils/formatTransfer';
+import {
+    formatTransferAmount,
+    formatTransferDetailDate,
+    formatTransferShareMessage,
+} from '../utils/formatTransfer';
 
 type TransferDetailScreenProps = TransferHistoryStackScreenProps<
     typeof TransferHistoryRoute.TransferDetail
@@ -45,39 +49,81 @@ export function TransferDetailScreen({ route }: TransferDetailScreenProps) {
         );
     }
 
-    function renderTransferDetail(currentTransfer: Transfer) {
+    async function shareTransferDetails(currentTransfer: Transfer) {
+        try {
+            await Share.share({
+                message: formatTransferShareMessage(currentTransfer),
+                title: 'Transfer details',
+            });
+        } catch {
+            Alert.alert('Unable to share transfer details', 'Please try again.');
+        }
+    }
+
+    function renderSummary(currentTransfer: Transfer) {
         const amountText = formatTransferAmount(currentTransfer.amount);
         const transferDirection = currentTransfer.amount >= 0 ? 'Received' : 'Sent';
 
         return (
-            <View style={styles.receiptCard}>
-                <View style={styles.summaryPanel}>
-                    <View style={styles.summaryHeader}>
-                        <Text style={styles.summaryLabel}>Transfer</Text>
-                        <View style={styles.statusPill}>
-                            <Text style={styles.statusPillText}>{transferDirection}</Text>
-                        </View>
+            <View style={styles.summaryPanel}>
+                <View style={styles.summaryHeader}>
+                    <Text style={styles.summaryLabel}>Transfer</Text>
+                    <View style={styles.statusPill}>
+                        <Text style={styles.statusPillText}>{transferDirection}</Text>
                     </View>
-                    <Text adjustsFontSizeToFit numberOfLines={1} style={styles.amount}>
-                        {amountText}
-                    </Text>
                 </View>
+                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.amount}>
+                    {amountText}
+                </Text>
+            </View>
+        );
+    }
 
-                <View style={styles.transferPanel}>
-                    <Text style={styles.transferLabel}>Transfer</Text>
-                    <Text ellipsizeMode="tail" numberOfLines={2} style={styles.transferName}>
-                        {currentTransfer.transferName}
-                    </Text>
-                </View>
+    function renderTransferName(currentTransfer: Transfer) {
+        return (
+            <Text ellipsizeMode="tail" numberOfLines={2} style={styles.transferName}>
+                {currentTransfer.transferName}
+            </Text>
+        );
+    }
 
-                <View style={styles.detailList}>
-                    {renderDetailRow('Reference ID', currentTransfer.refId)}
-                    {renderDetailRow(
-                        'Date & time',
-                        formatTransferDetailDate(currentTransfer.transferDate),
-                    )}
-                    {renderDetailRow('Recipient', currentTransfer.recipientName)}
-                </View>
+    function renderDetailList(currentTransfer: Transfer) {
+        return (
+            <View style={styles.detailList}>
+                {renderDetailRow('Reference ID', currentTransfer.refId)}
+                {renderDetailRow(
+                    'Date & time',
+                    formatTransferDetailDate(currentTransfer.transferDate),
+                )}
+                {renderDetailRow('Recipient', currentTransfer.recipientName)}
+            </View>
+        );
+    }
+
+    function renderShareButton(currentTransfer: Transfer) {
+        return (
+            <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                    void shareTransferDetails(currentTransfer);
+                }}
+                style={({ pressed }) => [
+                    styles.shareButton,
+                    pressed ? styles.shareButtonPressed : null,
+                ]}
+            >
+                <Text style={styles.shareButtonText}>Share details</Text>
+            </Pressable>
+        );
+    }
+
+    function renderTransferDetail(currentTransfer: Transfer) {
+        return (
+            <View style={styles.receiptCard}>
+                {renderSummary(currentTransfer)}
+                {renderTransferName(currentTransfer)}
+                {renderDetailList(currentTransfer)}
+                {renderShareButton(currentTransfer)}
             </View>
         );
     }
@@ -145,25 +191,14 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZE.Sm,
         fontWeight: '800',
     },
-    transferPanel: {
-        backgroundColor: COLOR.PrimarySoft,
-        flexDirection: 'row',
-        gap: SPACING.Md,
-        justifyContent: 'space-between',
-        paddingHorizontal: SPACING.Xl,
-        paddingVertical: SPACING.Lg,
-    },
-    transferLabel: {
-        color: COLOR.PrimaryDark,
-        fontSize: FONT_SIZE.Md,
-        fontWeight: '700',
-    },
     transferName: {
+        backgroundColor: COLOR.PrimarySoft,
         color: COLOR.Ink,
-        flex: 1,
         fontSize: FONT_SIZE.Md,
         fontWeight: '800',
-        textAlign: 'right',
+        paddingHorizontal: SPACING.Xl,
+        paddingVertical: SPACING.Lg,
+        textAlign: 'center',
     },
     detailList: {
         paddingHorizontal: SPACING.Xl,
@@ -187,6 +222,23 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZE.Md,
         fontWeight: '700',
         textAlign: 'right',
+    },
+    shareButton: {
+        alignItems: 'center',
+        backgroundColor: COLOR.Primary,
+        borderRadius: 999,
+        marginHorizontal: SPACING.Xl,
+        marginTop: SPACING.Md,
+        marginBottom: SPACING.Xl,
+        paddingVertical: SPACING.Md,
+    },
+    shareButtonPressed: {
+        opacity: 0.7,
+    },
+    shareButtonText: {
+        color: COLOR.Surface,
+        fontSize: FONT_SIZE.Md,
+        fontWeight: '800',
     },
     feedbackPanel: {
         alignItems: 'center',

@@ -40,6 +40,17 @@ export function formatTransferDetailDate(transferDate: Transfer['transferDate'])
     return detailDateFormatter.format(new Date(transferDate));
 }
 
+export function formatTransferShareMessage(transfer: Transfer) {
+    return [
+        'Transfer details',
+        `Amount: ${formatTransferAmount(transfer.amount)}`,
+        `Transfer: ${transfer.transferName}`,
+        `Recipient: ${transfer.recipientName}`,
+        `Reference ID: ${transfer.refId}`,
+        `Date & time: ${formatTransferDetailDate(transfer.transferDate)}`,
+    ].join('\n');
+}
+
 export function formatTransferMonth(transferDate: Transfer['transferDate']) {
     return monthFormatter.format(new Date(transferDate));
 }
