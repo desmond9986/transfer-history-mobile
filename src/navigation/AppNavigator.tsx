@@ -2,6 +2,7 @@ import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { TransferHistoryNavigator } from '../modules/transferHistory/navigation/TransferHistoryNavigator';
+import { COLOR } from '../shared/theme/tokens';
 import { AppRoute } from './routes';
 import type { AppStackParamList } from './types';
 
@@ -11,8 +12,8 @@ const navigationTheme = {
     ...DefaultTheme,
     colors: {
         ...DefaultTheme.colors,
-        background: '#ffffff',
-        card: '#ffffff',
+        background: COLOR.Surface,
+        card: COLOR.Surface,
     },
 };
 
@@ -34,7 +35,7 @@ export function AppNavigator() {
                 initialRouteName={AppRoute.TransferHistoryStack}
                 screenOptions={{
                     headerShown: false,
-                    contentStyle: { backgroundColor: '#ffffff' },
+                    contentStyle: { backgroundColor: COLOR.Surface },
                 }}
             >
                 {renderAppStackScreens()}

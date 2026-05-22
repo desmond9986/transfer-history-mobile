@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { COLOR } from '../../../shared/theme/tokens';
 import { TransferDetailScreen } from '../screens/TransferDetailScreen';
 import { TransferHistoryScreen } from '../screens/TransferHistoryScreen';
 import { TransferHistoryRoute } from './routes';
@@ -32,7 +33,7 @@ export function TransferHistoryNavigator() {
         <Stack.Navigator
             initialRouteName={TransferHistoryRoute.TransferHistory}
             screenOptions={{
-                contentStyle: { backgroundColor: '#ffffff' },
+                contentStyle: { backgroundColor: COLOR.Surface },
             }}
         >
             {renderTransferHistoryStackScreens()}
