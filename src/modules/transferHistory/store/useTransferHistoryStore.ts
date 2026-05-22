@@ -21,6 +21,7 @@ type TransferHistoryState = {
     isLoadingMore: boolean;
     isRefreshing: boolean;
     errorMessage: string | null;
+    loadMoreErrorMessage: string | null;
     hasLoaded: boolean;
     hasMoreTransfers: boolean;
     nextOffset: number;
@@ -43,6 +44,7 @@ const INITIAL_STATE: TransferHistoryState = {
     isLoadingMore: false,
     isRefreshing: false,
     errorMessage: null,
+    loadMoreErrorMessage: null,
     hasLoaded: false,
     hasMoreTransfers: false,
     nextOffset: 0,
@@ -64,6 +66,7 @@ export const useTransferHistoryStore = create<TransferHistoryStore>((set, get) =
             errorMessage: null,
             isLoading: !hasLoaded,
             isRefreshing: force && hasLoaded,
+            loadMoreErrorMessage: null,
             nextOffset: 0,
         });
 
@@ -98,8 +101,8 @@ export const useTransferHistoryStore = create<TransferHistoryStore>((set, get) =
         }
 
         set({
-            errorMessage: null,
             isLoadingMore: true,
+            loadMoreErrorMessage: null,
         });
 
         try {
@@ -119,15 +122,21 @@ export const useTransferHistoryStore = create<TransferHistoryStore>((set, get) =
             }));
         } catch {
             set({
-                errorMessage: TRANSFER_ERROR_MESSAGE.LoadFailed,
                 isLoadingMore: false,
+                loadMoreErrorMessage: TRANSFER_ERROR_MESSAGE.LoadMoreFailed,
             });
         }
     },
     setTransferTypeFilter(filter) {
-        set({ transferTypeFilter: filter });
+        set({
+            loadMoreErrorMessage: null,
+            transferTypeFilter: filter,
+        });
     },
     setDateRangeFilter(filter) {
-        set({ dateRangeFilter: filter });
+        set({
+            dateRangeFilter: filter,
+            loadMoreErrorMessage: null,
+        });
     },
 }));

@@ -33,6 +33,7 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
     const isLoadingMore = useTransferHistoryStore((state) => state.isLoadingMore);
     const isRefreshing = useTransferHistoryStore((state) => state.isRefreshing);
     const errorMessage = useTransferHistoryStore((state) => state.errorMessage);
+    const loadMoreErrorMessage = useTransferHistoryStore((state) => state.loadMoreErrorMessage);
     const hasLoaded = useTransferHistoryStore((state) => state.hasLoaded);
     const hasMoreTransfers = useTransferHistoryStore((state) => state.hasMoreTransfers);
     const transferTypeFilter = useTransferHistoryStore((state) => state.transferTypeFilter);
@@ -129,6 +130,25 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
 
         if (!hasMoreTransfers && filteredTransfers.length === 0) {
             return null;
+        }
+
+        if (loadMoreErrorMessage) {
+            return (
+                <View style={styles.loadMoreErrorPanel}>
+                    <Text style={styles.loadMoreErrorText}>{loadMoreErrorMessage}</Text>
+                    <Pressable
+                        accessibilityRole="button"
+                        disabled={isLoadingMore}
+                        onPress={requestMoreTransfers}
+                        style={({ pressed }) => [
+                            styles.retryButton,
+                            pressed ? styles.paginationHintPanelPressed : null,
+                        ]}
+                    >
+                        <Text style={styles.retryButtonText}>Retry</Text>
+                    </Pressable>
+                </View>
+            );
         }
 
         if (!hasMoreTransfers) {
@@ -242,6 +262,19 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZE.Md,
         marginTop: SPACING.Xs,
     },
+    retryButton: {
+        alignSelf: 'center',
+        backgroundColor: COLOR.PrimarySoft,
+        borderRadius: RADIUS.Md,
+        marginTop: SPACING.Md,
+        paddingHorizontal: SPACING.Lg,
+        paddingVertical: SPACING.Sm,
+    },
+    retryButtonText: {
+        color: COLOR.PrimaryDark,
+        fontSize: FONT_SIZE.Sm,
+        fontWeight: '800',
+    },
     sectionTitle: {
         color: COLOR.PrimaryDark,
         fontSize: FONT_SIZE.Sm,
@@ -266,6 +299,16 @@ const styles = StyleSheet.create({
     paginationHintText: {
         color: COLOR.TextMuted,
         fontSize: FONT_SIZE.Md,
+    },
+    loadMoreErrorPanel: {
+        alignItems: 'center',
+        gap: SPACING.Sm,
+        paddingVertical: SPACING.Xl,
+    },
+    loadMoreErrorText: {
+        color: COLOR.ErrorText,
+        fontSize: FONT_SIZE.Md,
+        textAlign: 'center',
     },
     loadMoreButton: {
         alignItems: 'center',
