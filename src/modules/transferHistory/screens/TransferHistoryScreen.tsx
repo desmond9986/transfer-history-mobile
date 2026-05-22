@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import {
+    RefreshControl,
     SectionList,
     StyleSheet,
     Text,
@@ -10,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLOR, FONT_SIZE, RADIUS, SPACING } from '../../../shared/theme/tokens';
+import { TransferListSkeleton } from '../components/TransferListSkeleton';
 import { TransferRow } from '../components/TransferRow';
 import { TransferHistoryRoute } from '../navigation/routes';
 import type { TransferHistoryStackScreenProps } from '../navigation/types';
@@ -24,6 +26,7 @@ type TransferHistoryScreenProps = TransferHistoryStackScreenProps<
 export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps) {
     const transfers = useTransferHistoryStore((state) => state.transfers);
     const isLoading = useTransferHistoryStore((state) => state.isLoading);
+    const isRefreshing = useTransferHistoryStore((state) => state.isRefreshing);
     const errorMessage = useTransferHistoryStore((state) => state.errorMessage);
     const hasLoaded = useTransferHistoryStore((state) => state.hasLoaded);
     const loadTransfers = useTransferHistoryStore((state) => state.loadTransfers);
@@ -42,6 +45,10 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
         },
         [navigation],
     );
+
+    const refreshTransfers = useCallback(() => {
+        void loadTransfers({ force: true });
+    }, [loadTransfers]);
 
     const renderTransferItem: ListRenderItem<Transfer> = useCallback(
         ({ item }) => <TransferRow onPressTransfer={openTransferDetail} transfer={item} />,
@@ -70,8 +77,8 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
     }
 
     function renderEmptyState() {
-        if (isLoading && !hasLoaded) {
-            return <Text style={styles.emptyText}>Loading transfers...</Text>;
+        if ((isLoading || isRefreshing) && !hasLoaded) {
+            return <TransferListSkeleton />;
         }
 
         if (errorMessage) {
@@ -92,11 +99,20 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
     return (
         <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.container}>
             <SectionList
+                alwaysBounceVertical
                 contentContainerStyle={styles.listContent}
                 ItemSeparatorComponent={renderSeparator}
                 keyExtractor={keyExtractor}
                 ListEmptyComponent={renderEmptyState}
                 ListHeaderComponent={renderHeader}
+                refreshControl={
+                    <RefreshControl
+                        colors={[COLOR.Primary]}
+                        refreshing={isRefreshing}
+                        tintColor={COLOR.Primary}
+                        onRefresh={refreshTransfers}
+                    />
+                }
                 renderItem={renderTransferItem}
                 renderSectionHeader={renderSectionHeader}
                 sections={sections}
