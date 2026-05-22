@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
     ActivityIndicator,
     Pressable,
@@ -28,6 +28,8 @@ type TransferHistoryScreenProps = TransferHistoryStackScreenProps<
 >;
 
 export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps) {
+    const sectionListRef = useRef<SectionList<Transfer, TransferSection>>(null);
+
     const transfers = useTransferHistoryStore((state) => state.transfers);
     const isLoading = useTransferHistoryStore((state) => state.isLoading);
     const isLoadingMore = useTransferHistoryStore((state) => state.isLoadingMore);
@@ -57,6 +59,22 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
     useEffect(() => {
         void loadTransfers();
     }, [loadTransfers]);
+
+    useEffect(() => {
+        if (!loadMoreErrorMessage) {
+            return;
+        }
+
+        const timeoutId = setTimeout(() => {
+            sectionListRef.current?.getScrollResponder()?.scrollToEnd({
+                animated: true,
+            });
+        }, 50);
+
+        return () => {
+            clearTimeout(timeoutId);
+        };
+    }, [loadMoreErrorMessage]);
 
     const openTransferDetail = useCallback(
         (transfer: Transfer) => {
@@ -191,6 +209,7 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
     return (
         <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.container}>
             <SectionList
+                ref={sectionListRef}
                 alwaysBounceVertical
                 contentContainerStyle={styles.listContent}
                 ItemSeparatorComponent={renderSeparator}
