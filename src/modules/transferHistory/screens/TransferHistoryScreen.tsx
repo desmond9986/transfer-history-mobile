@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import {
+    ActivityIndicator,
+    Pressable,
     RefreshControl,
     SectionList,
     StyleSheet,
@@ -28,12 +30,15 @@ type TransferHistoryScreenProps = TransferHistoryStackScreenProps<
 export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps) {
     const transfers = useTransferHistoryStore((state) => state.transfers);
     const isLoading = useTransferHistoryStore((state) => state.isLoading);
+    const isLoadingMore = useTransferHistoryStore((state) => state.isLoadingMore);
     const isRefreshing = useTransferHistoryStore((state) => state.isRefreshing);
     const errorMessage = useTransferHistoryStore((state) => state.errorMessage);
     const hasLoaded = useTransferHistoryStore((state) => state.hasLoaded);
+    const hasMoreTransfers = useTransferHistoryStore((state) => state.hasMoreTransfers);
     const transferTypeFilter = useTransferHistoryStore((state) => state.transferTypeFilter);
     const dateRangeFilter = useTransferHistoryStore((state) => state.dateRangeFilter);
     const loadTransfers = useTransferHistoryStore((state) => state.loadTransfers);
+    const loadMoreTransfers = useTransferHistoryStore((state) => state.loadMoreTransfers);
     const setTransferTypeFilter = useTransferHistoryStore((state) => state.setTransferTypeFilter);
     const setDateRangeFilter = useTransferHistoryStore((state) => state.setDateRangeFilter);
 
@@ -47,6 +52,7 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
         [dateRangeFilter, transferTypeFilter, transfers],
     );
     const sections = useMemo(() => createTransferSections(filteredTransfers), [filteredTransfers]);
+
     useEffect(() => {
         void loadTransfers();
     }, [loadTransfers]);
@@ -63,6 +69,14 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
     const refreshTransfers = useCallback(() => {
         void loadTransfers({ force: true });
     }, [loadTransfers]);
+
+    const requestMoreTransfers = useCallback(() => {
+        if (errorMessage || isLoading || isLoadingMore || isRefreshing || !hasMoreTransfers) {
+            return;
+        }
+
+        void loadMoreTransfers();
+    }, [errorMessage, hasMoreTransfers, isLoading, isLoadingMore, isRefreshing, loadMoreTransfers]);
 
     const renderTransferItem: ListRenderItem<Transfer> = useCallback(
         ({ item }) => <TransferRow onPressTransfer={openTransferDetail} transfer={item} />,
@@ -108,6 +122,44 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
         return <Text style={styles.emptyText}>No transfers found.</Text>;
     }
 
+    function renderFooter() {
+        if (!hasLoaded || errorMessage) {
+            return null;
+        }
+
+        if (!hasMoreTransfers && filteredTransfers.length === 0) {
+            return null;
+        }
+
+        if (!hasMoreTransfers) {
+            return (
+                <View style={styles.paginationHintPanel}>
+                    <Text style={styles.paginationHintText}>No more transfers</Text>
+                </View>
+            );
+        }
+
+        return (
+            <Pressable
+                accessibilityRole="button"
+                disabled={isLoadingMore}
+                onPress={requestMoreTransfers}
+                style={({ pressed }) => [
+                    styles.loadMoreButton,
+                    pressed ? styles.paginationHintPanelPressed : null,
+                ]}
+            >
+                {isLoadingMore ? <ActivityIndicator color={COLOR.Primary} size="small" /> : null}
+                <Text style={styles.loadMoreButtonText}>
+                    {getPaginationHintText({
+                        hasMoreTransfers,
+                        isLoadingMore,
+                    })}
+                </Text>
+            </Pressable>
+        );
+    }
+
     function keyExtractor(transfer: Transfer) {
         return transfer.refId;
     }
@@ -124,6 +176,7 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
                 ItemSeparatorComponent={renderSeparator}
                 keyExtractor={keyExtractor}
                 ListEmptyComponent={renderEmptyState}
+                ListFooterComponent={renderFooter}
                 ListHeaderComponent={renderHeader}
                 refreshControl={
                     <RefreshControl
@@ -140,6 +193,20 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
             />
         </SafeAreaView>
     );
+}
+
+function getPaginationHintText({
+    hasMoreTransfers,
+    isLoadingMore,
+}: {
+    hasMoreTransfers: boolean;
+    isLoadingMore: boolean;
+}) {
+    if (isLoadingMore) {
+        return 'Loading more transfers...';
+    }
+
+    return hasMoreTransfers ? 'Load more' : 'No more transfers';
 }
 
 const styles = StyleSheet.create({
@@ -185,6 +252,37 @@ const styles = StyleSheet.create({
     },
     rowSeparator: {
         height: 0,
+    },
+    paginationHintPanel: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: SPACING.Sm,
+        justifyContent: 'center',
+        paddingVertical: SPACING.Xl,
+    },
+    paginationHintPanelPressed: {
+        opacity: 0.7,
+    },
+    paginationHintText: {
+        color: COLOR.TextMuted,
+        fontSize: FONT_SIZE.Md,
+    },
+    loadMoreButton: {
+        alignItems: 'center',
+        alignSelf: 'center',
+        backgroundColor: COLOR.PrimarySoft,
+        borderRadius: RADIUS.Md,
+        flexDirection: 'row',
+        gap: SPACING.Sm,
+        justifyContent: 'center',
+        marginTop: SPACING.Xl,
+        paddingHorizontal: SPACING.Lg,
+        paddingVertical: SPACING.Sm,
+    },
+    loadMoreButtonText: {
+        color: COLOR.PrimaryDark,
+        fontSize: FONT_SIZE.Sm,
+        fontWeight: '800',
     },
     emptyText: {
         color: COLOR.TextMuted,
