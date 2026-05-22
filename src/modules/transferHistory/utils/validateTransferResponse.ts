@@ -1,5 +1,5 @@
 import { TRANSFER_ERROR_MESSAGE } from '../constants';
-import type { Transfer } from '../types/transfer';
+import type { Transfer } from '../types';
 
 export function validateTransferResponse(value: unknown): Transfer[] {
     if (!Array.isArray(value) || !value.every(isTransfer)) {

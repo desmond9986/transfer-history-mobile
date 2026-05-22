@@ -5,3 +5,8 @@ export type Transfer = {
     transferName: string;
     amount: number;
 };
+
+export type TransferSection = {
+    title: string;
+    data: Transfer[];
+};

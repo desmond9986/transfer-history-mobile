@@ -2,18 +2,14 @@ import { create } from 'zustand';
 
 import { TRANSFER_ERROR_MESSAGE } from '../constants';
 import { getTransfers } from '../services/mockTransferService';
-import type { Transfer } from '../types/transfer';
-
-type LoadTransfersOptions = {
-    force?: boolean;
-};
+import type { Transfer } from '../types';
 
 type TransferHistoryStore = {
     transfers: Transfer[];
     isLoading: boolean;
     errorMessage: string | null;
     hasLoaded: boolean;
-    loadTransfers: (options?: LoadTransfersOptions) => Promise<void>;
+    loadTransfers: () => Promise<void>;
 };
 
 export const useTransferHistoryStore = create<TransferHistoryStore>((set, get) => ({
@@ -21,11 +17,10 @@ export const useTransferHistoryStore = create<TransferHistoryStore>((set, get) =
     isLoading: false,
     errorMessage: null,
     hasLoaded: false,
-    async loadTransfers(options) {
-        const { force = false } = options ?? {};
+    async loadTransfers() {
         const { hasLoaded, isLoading } = get();
 
-        if (isLoading || (hasLoaded && !force)) {
+        if (isLoading || hasLoaded) {
             return;
         }
 

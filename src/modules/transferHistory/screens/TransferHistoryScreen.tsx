@@ -1,10 +1,21 @@
-import { useEffect } from 'react';
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo } from 'react';
+import {
+    SectionList,
+    StyleSheet,
+    Text,
+    View,
+    type ListRenderItem,
+    type SectionListData,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { COLOR, FONT_SIZE, RADIUS, SPACING } from '../../../shared/theme/tokens';
+import { TransferRow } from '../components/TransferRow';
 import { TransferHistoryRoute } from '../navigation/routes';
 import type { TransferHistoryStackScreenProps } from '../navigation/types';
 import { useTransferHistoryStore } from '../store/useTransferHistoryStore';
+import type { Transfer, TransferSection } from '../types';
+import { createTransferSections } from '../utils/createTransferSections';
 
 type TransferHistoryScreenProps = TransferHistoryStackScreenProps<
     typeof TransferHistoryRoute.TransferHistory
@@ -14,42 +25,83 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
     const transfers = useTransferHistoryStore((state) => state.transfers);
     const isLoading = useTransferHistoryStore((state) => state.isLoading);
     const errorMessage = useTransferHistoryStore((state) => state.errorMessage);
+    const hasLoaded = useTransferHistoryStore((state) => state.hasLoaded);
     const loadTransfers = useTransferHistoryStore((state) => state.loadTransfers);
 
-    const latestTransfer = transfers[0];
-    const statusMessage =
-        errorMessage ??
-        (isLoading
-            ? 'Loading transfer data...'
-            : `${transfers.length} mock transfers loaded from the store.`);
+    const sections = useMemo(() => createTransferSections(transfers), [transfers]);
 
     useEffect(() => {
         void loadTransfers();
     }, [loadTransfers]);
 
-    function openSampleTransfer() {
-        if (!latestTransfer) {
-            return;
+    const openTransferDetail = useCallback(
+        (transfer: Transfer) => {
+            navigation.navigate(TransferHistoryRoute.TransferDetail, {
+                refId: transfer.refId,
+            });
+        },
+        [navigation],
+    );
+
+    const renderTransferItem: ListRenderItem<Transfer> = useCallback(
+        ({ item }) => <TransferRow onPressTransfer={openTransferDetail} transfer={item} />,
+        [openTransferDetail],
+    );
+
+    const renderSectionHeader = useCallback(
+        ({ section }: { section: SectionListData<Transfer, TransferSection> }) => (
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+        ),
+        [],
+    );
+
+    function renderHeader() {
+        return (
+            <View style={styles.header}>
+                <Text style={styles.title}>Transfer History</Text>
+                {errorMessage ? (
+                    <View style={styles.errorPanel}>
+                        <Text style={styles.errorTitle}>Transfer history unavailable</Text>
+                        <Text style={styles.errorDescription}>{errorMessage}</Text>
+                    </View>
+                ) : null}
+            </View>
+        );
+    }
+
+    function renderEmptyState() {
+        if (isLoading && !hasLoaded) {
+            return <Text style={styles.emptyText}>Loading transfers...</Text>;
         }
 
-        navigation.navigate(TransferHistoryRoute.TransferDetail, {
-            refId: latestTransfer.refId,
-        });
+        if (errorMessage) {
+            return null;
+        }
+
+        return <Text style={styles.emptyText}>No transfers found.</Text>;
+    }
+
+    function keyExtractor(transfer: Transfer) {
+        return transfer.refId;
+    }
+
+    function renderSeparator() {
+        return <View style={styles.rowSeparator} />;
     }
 
     return (
-        <SafeAreaView edges={['left', 'right', 'bottom']} style={styles.container}>
-            <View style={styles.content}>
-                <Text style={styles.title}>Transfer History</Text>
-                <Text style={[styles.description, errorMessage ? styles.errorText : null]}>
-                    {statusMessage}
-                </Text>
-                <Button
-                    disabled={!latestTransfer}
-                    title="Open latest transfer"
-                    onPress={openSampleTransfer}
-                />
-            </View>
+        <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.container}>
+            <SectionList
+                contentContainerStyle={styles.listContent}
+                ItemSeparatorComponent={renderSeparator}
+                keyExtractor={keyExtractor}
+                ListEmptyComponent={renderEmptyState}
+                ListHeaderComponent={renderHeader}
+                renderItem={renderTransferItem}
+                renderSectionHeader={renderSectionHeader}
+                sections={sections}
+                stickySectionHeadersEnabled={false}
+            />
         </SafeAreaView>
     );
 }
@@ -57,25 +109,51 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: COLOR.Background,
     },
-    content: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingHorizontal: 24,
-        rowGap: 16,
+    listContent: {
+        paddingBottom: SPACING.Xl,
+        paddingHorizontal: SPACING.Lg,
+    },
+    header: {
+        paddingTop: SPACING.Xl,
     },
     title: {
-        color: '#111827',
-        fontSize: 28,
-        fontWeight: '700',
+        color: COLOR.Ink,
+        fontSize: FONT_SIZE.Xxl,
+        fontWeight: '800',
     },
-    description: {
-        color: '#4b5563',
-        fontSize: 16,
-        lineHeight: 24,
+    errorPanel: {
+        backgroundColor: COLOR.ErrorBackground,
+        borderRadius: RADIUS.Md,
+        marginTop: SPACING.Lg,
+        padding: SPACING.Lg,
     },
-    errorText: {
-        color: '#b42318',
+    errorTitle: {
+        color: COLOR.ErrorText,
+        fontSize: FONT_SIZE.Lg,
+        fontWeight: '800',
+    },
+    errorDescription: {
+        color: COLOR.ErrorText,
+        fontSize: FONT_SIZE.Md,
+        marginTop: SPACING.Xs,
+    },
+    sectionTitle: {
+        color: COLOR.PrimaryDark,
+        fontSize: FONT_SIZE.Sm,
+        fontWeight: '800',
+        marginTop: SPACING.Lg,
+        paddingBottom: SPACING.Sm,
+        textTransform: 'uppercase',
+    },
+    rowSeparator: {
+        height: 0,
+    },
+    emptyText: {
+        color: COLOR.TextMuted,
+        fontSize: FONT_SIZE.Md,
+        paddingTop: SPACING.Xl,
+        textAlign: 'center',
     },
 });
