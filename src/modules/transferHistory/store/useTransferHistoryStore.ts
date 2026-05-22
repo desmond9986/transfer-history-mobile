@@ -2,7 +2,13 @@ import { create } from 'zustand';
 
 import { TRANSFER_ERROR_MESSAGE } from '../constants';
 import { getTransfers } from '../services/mockTransferService';
-import type { Transfer } from '../types';
+import {
+    TRANSFER_DATE_RANGE_FILTER,
+    TRANSFER_TYPE_FILTER,
+    type Transfer,
+    type TransferDateRangeFilter,
+    type TransferTypeFilter,
+} from '../types';
 
 type LoadTransfersOptions = {
     force?: boolean;
@@ -14,7 +20,11 @@ type TransferHistoryStore = {
     isRefreshing: boolean;
     errorMessage: string | null;
     hasLoaded: boolean;
+    transferTypeFilter: TransferTypeFilter;
+    dateRangeFilter: TransferDateRangeFilter;
     loadTransfers: (options?: LoadTransfersOptions) => Promise<void>;
+    setTransferTypeFilter: (filter: TransferTypeFilter) => void;
+    setDateRangeFilter: (filter: TransferDateRangeFilter) => void;
 };
 
 export const useTransferHistoryStore = create<TransferHistoryStore>((set, get) => ({
@@ -23,6 +33,8 @@ export const useTransferHistoryStore = create<TransferHistoryStore>((set, get) =
     isRefreshing: false,
     errorMessage: null,
     hasLoaded: false,
+    transferTypeFilter: TRANSFER_TYPE_FILTER.All,
+    dateRangeFilter: TRANSFER_DATE_RANGE_FILTER.All,
     async loadTransfers(options) {
         const { force = false } = options ?? {};
         const { hasLoaded, isLoading, isRefreshing } = get();
@@ -53,5 +65,11 @@ export const useTransferHistoryStore = create<TransferHistoryStore>((set, get) =
                 isRefreshing: false,
             });
         }
+    },
+    setTransferTypeFilter(filter) {
+        set({ transferTypeFilter: filter });
+    },
+    setDateRangeFilter(filter) {
+        set({ dateRangeFilter: filter });
     },
 }));

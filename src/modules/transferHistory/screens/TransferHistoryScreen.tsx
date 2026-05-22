@@ -11,13 +11,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLOR, FONT_SIZE, RADIUS, SPACING } from '../../../shared/theme/tokens';
+import { TransferHistoryFilters } from '../components/TransferHistoryFilters';
 import { TransferListSkeleton } from '../components/TransferListSkeleton';
 import { TransferRow } from '../components/TransferRow';
 import { TransferHistoryRoute } from '../navigation/routes';
 import type { TransferHistoryStackScreenProps } from '../navigation/types';
 import { useTransferHistoryStore } from '../store/useTransferHistoryStore';
-import type { Transfer, TransferSection } from '../types';
+import { type Transfer, type TransferSection } from '../types';
 import { createTransferSections } from '../utils/createTransferSections';
+import { filterTransfers } from '../utils/filterTransfers';
 
 type TransferHistoryScreenProps = TransferHistoryStackScreenProps<
     typeof TransferHistoryRoute.TransferHistory
@@ -29,10 +31,22 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
     const isRefreshing = useTransferHistoryStore((state) => state.isRefreshing);
     const errorMessage = useTransferHistoryStore((state) => state.errorMessage);
     const hasLoaded = useTransferHistoryStore((state) => state.hasLoaded);
+    const transferTypeFilter = useTransferHistoryStore((state) => state.transferTypeFilter);
+    const dateRangeFilter = useTransferHistoryStore((state) => state.dateRangeFilter);
     const loadTransfers = useTransferHistoryStore((state) => state.loadTransfers);
+    const setTransferTypeFilter = useTransferHistoryStore((state) => state.setTransferTypeFilter);
+    const setDateRangeFilter = useTransferHistoryStore((state) => state.setDateRangeFilter);
 
-    const sections = useMemo(() => createTransferSections(transfers), [transfers]);
-
+    const filteredTransfers = useMemo(
+        () =>
+            filterTransfers({
+                transfers,
+                transferTypeFilter,
+                dateRangeFilter,
+            }),
+        [dateRangeFilter, transferTypeFilter, transfers],
+    );
+    const sections = useMemo(() => createTransferSections(filteredTransfers), [filteredTransfers]);
     useEffect(() => {
         void loadTransfers();
     }, [loadTransfers]);
@@ -66,6 +80,12 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
         return (
             <View style={styles.header}>
                 <Text style={styles.title}>Transfer History</Text>
+                <TransferHistoryFilters
+                    dateRangeFilter={dateRangeFilter}
+                    transferTypeFilter={transferTypeFilter}
+                    onChangeDateRangeFilter={setDateRangeFilter}
+                    onChangeTransferTypeFilter={setTransferTypeFilter}
+                />
                 {errorMessage ? (
                     <View style={styles.errorPanel}>
                         <Text style={styles.errorTitle}>Transfer history unavailable</Text>
