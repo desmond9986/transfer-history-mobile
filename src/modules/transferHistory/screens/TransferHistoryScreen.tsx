@@ -104,7 +104,9 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
 
     const renderSectionHeader = useCallback(
         ({ section }: { section: SectionListData<Transfer, TransferSection> }) => (
-            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>{section.title}</Text>
+            </View>
         ),
         [],
     );
@@ -228,7 +230,7 @@ export function TransferHistoryScreen({ navigation }: TransferHistoryScreenProps
                 renderItem={renderTransferItem}
                 renderSectionHeader={renderSectionHeader}
                 sections={sections}
-                stickySectionHeadersEnabled={false}
+                stickySectionHeadersEnabled
             />
         </SafeAreaView>
     );
@@ -294,12 +296,15 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZE.Sm,
         fontWeight: '800',
     },
+    sectionHeader: {
+        backgroundColor: COLOR.Background,
+        paddingBottom: SPACING.Sm,
+        paddingTop: SPACING.Lg,
+    },
     sectionTitle: {
         color: COLOR.PrimaryDark,
         fontSize: FONT_SIZE.Sm,
         fontWeight: '800',
-        marginTop: SPACING.Lg,
-        paddingBottom: SPACING.Sm,
         textTransform: 'uppercase',
     },
     rowSeparator: {

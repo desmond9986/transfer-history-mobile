@@ -117,7 +117,7 @@ React Native 0.85 supports Node versions matching `^20.19.4 || ^22.13.0 || ^24.3
 | ---------------- | ----------------------------------------------------------------------------------------------------------- |
 | Transfer data    | Local JSON data with 30 sample transfers                                                                    |
 | Data safety      | Lightweight runtime validation before data reaches the UI                                                   |
-| Transfer history | Sectioned list grouped by month                                                                             |
+| Transfer history | Sectioned list grouped by month with sticky section headers                                                 |
 | Filtering        | All, Received, Sent filters plus compact date-range filter                                                  |
 | Pagination       | Real client pagination backed by a simulated paginated service using `offset` and `count`                   |
 | Refresh          | Pull-to-refresh reloads the first page                                                                      |
